@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Cadastro de Ideias</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .idea-card {
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        
+        .idea-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .priority-high { border-left: 4px solid #ef4444; }
+        .priority-medium { border-left: 4px solid #f59e0b; }
+        .priority-low { border-left: 4px solid #10b981; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-black min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-green-400 mb-4">💡 Sistema de Ideias</h1>
+            <p class="text-lg text-green-300">Capture, organize e desenvolva suas melhores ideias</p>
+        </div>
+
+        <!-- Formulário de Cadastro -->
+        <div class="bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 border border-green-500">
+            <h2 class="text-2xl font-semibold text-green-400 mb-6">Nova Ideia</h2>
+            <form id="ideaForm" class="space-y-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-green-300 mb-2">Título da Ideia</label>
+                        <input type="text" id="title" required 
+                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all placeholder-gray-400"
+                               placeholder="Digite o título da sua ideia...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-green-300 mb-2">Categoria</label>
+                        <select id="category" required 
+                                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                            <option value="">Selecione uma categoria</option>
+                            <option value="tecnologia">🔧 Tecnologia</option>
+                            <option value="negocio">💼 Negócio</option>
+                            <option value="criativo">🎨 Criativo</option>
+                            <option value="educacao">📚 Educação</option>
+                            <option value="saude">🏥 Saúde</option>
+                            <option value="sustentabilidade">🌱 Sustentabilidade</option>
+                            <option value="outros">📋 Outros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-green-300 mb-2">Descrição</label>
+                    <textarea id="description" required rows="4"
+                              class="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all placeholder-gray-400"
+                              placeholder="Descreva sua ideia em detalhes..."></textarea>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-green-300 mb-2">Prioridade</label>
+                        <select id="priority" required 
+                                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                            <option value="low">🟢 Baixa</option>
+                            <option value="medium" selected>🟡 Média</option>
+                            <option value="high">🔴 Alta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-green-300 mb-2">Status</label>
+                        <select id="status" required 
+                                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                            <option value="ideia" selected>💭 Ideia</option>
+                            <option value="planejamento">📋 Planejamento</option>
+                            <option value="desenvolvimento">⚙️ Desenvolvimento</option>
+                            <option value="concluido">✅ Concluído</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-green-300 mb-2">Data Limite</label>
+                        <input type="date" id="deadline" 
+                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-green-300 mb-2">Tags (separadas por vírgula)</label>
+                    <input type="text" id="tags" 
+                           class="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all placeholder-gray-400"
+                           placeholder="inovação, startup, mobile, etc...">
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-green-500 to-green-400 text-black font-semibold py-3 px-6 rounded-lg hover:from-green-400 hover:to-green-300 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                    ✨ Cadastrar Ideia
+                </button>
+            </form>
+        </div>
+
+        <!-- Filtros e Busca -->
+        <div class="bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-green-500">
+            <div class="flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex flex-wrap gap-4">
+                    <input type="text" id="searchInput" placeholder="🔍 Buscar ideias..." 
+                           class="px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 placeholder-gray-400">
+                    <select id="filterCategory" class="px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500">
+                        <option value="">Todas as categorias</option>
+                        <option value="tecnologia">🔧 Tecnologia</option>
+                        <option value="negocio">💼 Negócio</option>
+                        <option value="criativo">🎨 Criativo</option>
+                        <option value="educacao">📚 Educação</option>
+                        <option value="saude">🏥 Saúde</option>
+                        <option value="sustentabilidade">🌱 Sustentabilidade</option>
+                        <option value="outros">📋 Outros</option>
+                    </select>
+                    <select id="filterStatus" class="px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500">
+                        <option value="">Todos os status</option>
+                        <option value="ideia">💭 Ideia</option>
+                        <option value="planejamento">📋 Planejamento</option>
+                        <option value="desenvolvimento">⚙️ Desenvolvimento</option>
+                        <option value="concluido">✅ Concluído</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="exportExcel" 
+                            class="bg-green-500 hover:bg-green-400 text-black px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                        📊 Exportar Excel
+                    </button>
+                    <div class="text-sm text-green-300">
+                        Total: <span id="totalCount" class="font-semibold text-green-400">0</span> ideias
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Ideias -->
+        <div id="ideasContainer" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <!-- As ideias serão inseridas aqui dinamicamente -->
+        </div>
+
+        <!-- Mensagem quando não há ideias -->
+        <div id="emptyState" class="text-center py-16 hidden">
+            <div class="text-6xl mb-4">💡</div>
+            <h3 class="text-xl font-semibold text-green-400 mb-2">Nenhuma ideia encontrada</h3>
+            <p class="text-green-300">Cadastre sua primeira ideia ou ajuste os filtros de busca</p>
+        </div>
+    </div>
+
+    <script>
+        class IdeaManager {
+            constructor() {
+                this.ideas = JSON.parse(localStorage.getItem('ideas')) || [];
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.renderIdeas();
+                this.updateCounter();
+            }
+
+            bindEvents() {
+                document.getElementById('ideaForm').addEventListener('submit', (e) => this.handleSubmit(e));
+                document.getElementById('searchInput').addEventListener('input', () => this.filterIdeas());
+                document.getElementById('filterCategory').addEventListener('change', () => this.filterIdeas());
+                document.getElementById('filterStatus').addEventListener('change', () => this.filterIdeas());
+                document.getElementById('exportExcel').addEventListener('click', () => this.exportToExcel());
+            }
+
+            handleSubmit(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(e.target);
+                const idea = {
+                    id: Date.now(),
+                    title: document.getElementById('title').value,
+                    category: document.getElementById('category').value,
+                    description: document.getElementById('description').value,
+                    priority: document.getElementById('priority').value,
+                    status: document.getElementById('status').value,
+                    deadline: document.getElementById('deadline').value,
+                    tags: document.getElementById('tags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
+                    createdAt: new Date().toLocaleDateString('pt-BR'),
+                    updatedAt: new Date().toLocaleDateString('pt-BR')
+                };
+
+                this.ideas.unshift(idea);
+                this.saveToStorage();
+                this.renderIdeas();
+                this.updateCounter();
+                e.target.reset();
+                
+                // Feedback visual
+                this.showNotification('Ideia cadastrada com sucesso! ✨');
+            }
+
+            saveToStorage() {
+                localStorage.setItem('ideas', JSON.stringify(this.ideas));
+            }
+
+            renderIdeas(ideasToRender = this.ideas) {
+                const container = document.getElementById('ideasContainer');
+                const emptyState = document.getElementById('emptyState');
+                
+                if (ideasToRender.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+                
+                emptyState.classList.add('hidden');
+                
+                container.innerHTML = ideasToRender.map(idea => this.createIdeaCard(idea)).join('');
+                
+                // Adicionar event listeners para os botões
+                container.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = parseInt(e.target.dataset.id);
+                        this.deleteIdea(id);
+                    });
+                });
+
+                container.querySelectorAll('.edit-status').forEach(select => {
+                    select.addEventListener('change', (e) => {
+                        const id = parseInt(e.target.dataset.id);
+                        const newStatus = e.target.value;
+                        this.updateIdeaStatus(id, newStatus);
+                    });
+                });
+            }
+
+            createIdeaCard(idea) {
+                const priorityClass = `priority-${idea.priority}`;
+                const categoryIcons = {
+                    'tecnologia': '🔧',
+                    'negocio': '💼',
+                    'criativo': '🎨',
+                    'educacao': '📚',
+                    'saude': '🏥',
+                    'sustentabilidade': '🌱',
+                    'outros': '📋'
+                };
+                
+                const statusIcons = {
+                    'ideia': '💭',
+                    'planejamento': '📋',
+                    'desenvolvimento': '⚙️',
+                    'concluido': '✅'
+                };
+
+                const tagsHtml = idea.tags.map(tag => 
+                    `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">${tag}</span>`
+                ).join(' ');
+
+                return `
+                    <div class="idea-card bg-white rounded-xl shadow-lg p-6 ${priorityClass} fade-in">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-2xl">${categoryIcons[idea.category] || '📋'}</span>
+                                <h3 class="text-lg font-semibold text-gray-800 line-clamp-2">${idea.title}</h3>
+                            </div>
+                            <button class="delete-btn text-red-500 hover:text-red-700 transition-colors" data-id="${idea.id}">
+                                🗑️
+                            </button>
+                        </div>
+                        
+                        <p class="text-gray-600 mb-4 line-clamp-3">${idea.description}</p>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-500">Status:</span>
+                                <select class="edit-status text-sm border border-gray-300 rounded px-2 py-1" data-id="${idea.id}">
+                                    <option value="ideia" ${idea.status === 'ideia' ? 'selected' : ''}>💭 Ideia</option>
+                                    <option value="planejamento" ${idea.status === 'planejamento' ? 'selected' : ''}>📋 Planejamento</option>
+                                    <option value="desenvolvimento" ${idea.status === 'desenvolvimento' ? 'selected' : ''}>⚙️ Desenvolvimento</option>
+                                    <option value="concluido" ${idea.status === 'concluido' ? 'selected' : ''}>✅ Concluído</option>
+                                </select>
+                            </div>
+                            
+                            ${idea.deadline ? `
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-500">Prazo:</span>
+                                    <span class="text-sm font-medium">${new Date(idea.deadline).toLocaleDateString('pt-BR')}</span>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-500">Criado:</span>
+                                <span class="text-sm">${idea.createdAt}</span>
+                            </div>
+                            
+                            ${idea.tags.length > 0 ? `
+                                <div class="pt-2">
+                                    <div class="flex flex-wrap gap-1">
+                                        ${tagsHtml}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            deleteIdea(id) {
+                if (confirm('Tem certeza que deseja excluir esta ideia?')) {
+                    this.ideas = this.ideas.filter(idea => idea.id !== id);
+                    this.saveToStorage();
+                    this.renderIdeas();
+                    this.updateCounter();
+                    this.showNotification('Ideia excluída com sucesso! 🗑️');
+                }
+            }
+
+            updateIdeaStatus(id, newStatus) {
+                const idea = this.ideas.find(idea => idea.id === id);
+                if (idea) {
+                    idea.status = newStatus;
+                    idea.updatedAt = new Date().toLocaleDateString('pt-BR');
+                    this.saveToStorage();
+                    this.showNotification('Status atualizado! 📝');
+                }
+            }
+
+            filterIdeas() {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const categoryFilter = document.getElementById('filterCategory').value;
+                const statusFilter = document.getElementById('filterStatus').value;
+
+                const filteredIdeas = this.ideas.filter(idea => {
+                    const matchesSearch = idea.title.toLowerCase().includes(searchTerm) || 
+                                        idea.description.toLowerCase().includes(searchTerm) ||
+                                        idea.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                    const matchesCategory = !categoryFilter || idea.category === categoryFilter;
+                    const matchesStatus = !statusFilter || idea.status === statusFilter;
+                    
+                    return matchesSearch && matchesCategory && matchesStatus;
+                });
+
+                this.renderIdeas(filteredIdeas);
+                document.getElementById('totalCount').textContent = filteredIdeas.length;
+            }
+
+            updateCounter() {
+                document.getElementById('totalCount').textContent = this.ideas.length;
+            }
+
+            exportToExcel() {
+                if (this.ideas.length === 0) {
+                    this.showNotification('Nenhuma ideia para exportar! 📋', 'warning');
+                    return;
+                }
+
+                // Preparar dados para o Excel
+                const excelData = this.ideas.map(idea => ({
+                    'ID': idea.id,
+                    'Título': idea.title,
+                    'Categoria': this.getCategoryName(idea.category),
+                    'Descrição': idea.description,
+                    'Prioridade': this.getPriorityName(idea.priority),
+                    'Status': this.getStatusName(idea.status),
+                    'Data Limite': idea.deadline ? new Date(idea.deadline).toLocaleDateString('pt-BR') : '',
+                    'Tags': idea.tags.join(', '),
+                    'Data de Criação': idea.createdAt,
+                    'Última Atualização': idea.updatedAt
+                }));
+
+                // Criar workbook e worksheet
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(excelData);
+
+                // Configurar largura das colunas
+                const colWidths = [
+                    { wch: 12 }, // ID
+                    { wch: 30 }, // Título
+                    { wch: 15 }, // Categoria
+                    { wch: 50 }, // Descrição
+                    { wch: 12 }, // Prioridade
+                    { wch: 15 }, // Status
+                    { wch: 15 }, // Data Limite
+                    { wch: 30 }, // Tags
+                    { wch: 15 }, // Data de Criação
+                    { wch: 18 }  // Última Atualização
+                ];
+                ws['!cols'] = colWidths;
+
+                // Adicionar worksheet ao workbook
+                XLSX.utils.book_append_sheet(wb, ws, 'Ideias');
+
+                // Gerar nome do arquivo com data atual
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('pt-BR').replace(/\//g, '-');
+                const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+                const filename = `ideias_${dateStr}_${timeStr}.xlsx`;
+
+                // Fazer download do arquivo
+                XLSX.writeFile(wb, filename);
+                
+                this.showNotification(`Excel exportado com sucesso! 📊 (${this.ideas.length} ideias)`, 'success');
+            }
+
+            getCategoryName(category) {
+                const categories = {
+                    'tecnologia': '🔧 Tecnologia',
+                    'negocio': '💼 Negócio',
+                    'criativo': '🎨 Criativo',
+                    'educacao': '📚 Educação',
+                    'saude': '🏥 Saúde',
+                    'sustentabilidade': '🌱 Sustentabilidade',
+                    'outros': '📋 Outros'
+                };
+                return categories[category] || category;
+            }
+
+            getPriorityName(priority) {
+                const priorities = {
+                    'low': '🟢 Baixa',
+                    'medium': '🟡 Média',
+                    'high': '🔴 Alta'
+                };
+                return priorities[priority] || priority;
+            }
+
+            getStatusName(status) {
+                const statuses = {
+                    'ideia': '💭 Ideia',
+                    'planejamento': '📋 Planejamento',
+                    'desenvolvimento': '⚙️ Desenvolvimento',
+                    'concluido': '✅ Concluído'
+                };
+                return statuses[status] || status;
+            }
+
+            showNotification(message, type = 'success') {
+                // Criar notificação temporária
+                const bgColor = type === 'success' ? 'bg-green-500' : 
+                               type === 'warning' ? 'bg-yellow-500' : 'bg-red-500';
+                
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+        }
+
+        // Inicializar o sistema
+        document.addEventListener('DOMContentLoaded', () => {
+            new IdeaManager();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'968e29bec6a0f21b',t:'MTc1NDE0Mzg3MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
