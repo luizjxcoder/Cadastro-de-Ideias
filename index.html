@@ -117,6 +117,66 @@
             </form>
         </div>
 
+        <!-- Configuração Google Sheets -->
+        <div class="bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-blue-500">
+            <h3 class="text-lg font-semibold text-blue-400 mb-4">⚙️ Configuração Google Sheets</h3>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-blue-300 mb-2">URL do Web App (Apps Script)</label>
+                    <input type="url" id="sheetsUrl" 
+                           class="w-full px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                           placeholder="https://script.google.com/macros/s/SEU_ID/exec">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-blue-300 mb-2">Nome da Aba (opcional)</label>
+                    <input type="text" id="sheetName" 
+                           class="w-full px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                           placeholder="Planilha1" value="Planilha1">
+                </div>
+            </div>
+            <div class="mt-4 flex gap-4">
+                <button id="testConnection" 
+                        class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    🔍 Testar Conexão
+                </button>
+                <div id="connectionStatus" class="flex items-center text-sm"></div>
+            </div>
+
+            <!-- Instruções de Configuração -->
+            <div class="mt-6 border-t border-gray-600 pt-4">
+                <div class="flex items-center justify-between cursor-pointer" onclick="toggleSection('configInstructions')">
+                    <h4 class="text-md font-semibold text-blue-300">📋 Como configurar o Google Sheets</h4>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-blue-300">Clique para ver instruções</span>
+                        <svg id="configArrow" class="w-4 h-4 text-blue-300 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div id="configInstructions" class="hidden mt-4 p-4 bg-blue-900/30 rounded-lg border border-blue-500/30">
+                    <ol class="text-sm text-blue-200 space-y-3 list-decimal list-inside">
+                        <li><strong>Crie uma nova planilha</strong> no Google Sheets</li>
+                        <li>Na planilha, vá em <strong>Extensões → Apps Script</strong></li>
+                        <li>Apague o código padrão e cole o código fornecido na seção abaixo</li>
+                        <li>Salve o projeto (Ctrl+S)</li>
+                        <li>Clique em <strong>Implantar → Nova implantação</strong></li>
+                        <li>Em "Tipo", selecione <strong>"Aplicativo da Web"</strong></li>
+                        <li>Em "Quem tem acesso", escolha <strong>"Qualquer pessoa"</strong></li>
+                        <li>Clique em <strong>"Implantar"</strong></li>
+                        <li>Copie a <strong>URL do Web App</strong> (não a URL da planilha) e cole no campo acima</li>
+                        <li>Clique em "Testar Conexão" para verificar se está funcionando</li>
+                    </ol>
+                    
+                    <div class="mt-4 p-3 bg-yellow-900/30 rounded border border-yellow-500/30">
+                        <p class="text-sm text-yellow-200">
+                            <strong>⚠️ Importante:</strong> Use apenas a URL do Web App que termina com <code>/exec</code>, 
+                            não a URL da planilha do Google Sheets.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Filtros e Busca -->
         <div class="bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-green-500">
             <div class="flex flex-wrap gap-4 items-center justify-between">
@@ -146,8 +206,18 @@
                             class="bg-green-500 hover:bg-green-400 text-black px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
                         📊 Exportar Excel
                     </button>
+                    <div class="relative">
+                        <button id="exportGoogleSheets" 
+                                class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                            📋 Sincronizar Google Sheets
+                        </button>
+                        <div id="syncBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 hidden">
+                            0
+                        </div>
+                    </div>
                     <div class="text-sm text-green-300">
                         Total: <span id="totalCount" class="font-semibold text-green-400">0</span> ideias
+                        <span id="syncStatus" class="block text-xs text-blue-300 mt-1"></span>
                     </div>
                 </div>
             </div>
@@ -164,12 +234,317 @@
             <h3 class="text-xl font-semibold text-green-400 mb-2">Nenhuma ideia encontrada</h3>
             <p class="text-green-300">Cadastre sua primeira ideia ou ajuste os filtros de busca</p>
         </div>
+
+        <!-- Código Google Apps Script -->
+        <div class="bg-gray-800 rounded-xl shadow-lg p-6 mb-8 mt-12 border border-blue-500">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleSection('appsScriptSection')">
+                <h3 class="text-lg font-semibold text-blue-400">📝 Código para Google Apps Script</h3>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-blue-300">Clique para expandir</span>
+                    <svg id="appsScriptArrow" class="w-5 h-5 text-blue-400 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <div id="appsScriptSection" class="hidden mt-4">
+                <div class="bg-gray-900 rounded-lg p-4 border border-gray-600">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-blue-300">Copie este código e cole no Apps Script:</span>
+                        <button id="copyCode" class="bg-blue-500 hover:bg-blue-400 text-white px-3 py-1 rounded text-sm transition-colors">
+                            📋 Copiar
+                        </button>
+                    </div>
+                    <pre id="appsScriptCode" class="text-sm text-green-400 overflow-x-auto"><code>function doPost(e) {
+  try {
+    let data;
+    
+    // Múltiplas formas de receber dados para máxima compatibilidade
+    if (e && e.parameter && e.parameter.data) {
+      // Dados via FormData
+      data = JSON.parse(e.parameter.data);
+    } else if (e && e.postData && e.postData.contents) {
+      // Dados via JSON direto
+      data = JSON.parse(e.postData.contents);
+    } else if (e && e.parameters) {
+      // Dados via parâmetros URL
+      data = {
+        sheetName: e.parameters.sheetName ? e.parameters.sheetName[0] : 'Planilha1',
+        ideas: e.parameters.ideas ? JSON.parse(e.parameters.ideas[0]) : []
+      };
+    } else {
+      // Dados de teste se nada for encontrado
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          success: false,
+          message: 'Nenhum dado recebido. Verifique o formato do envio.',
+          debug: {
+            hasE: !!e,
+            hasParameter: !!(e && e.parameter),
+            hasPostData: !!(e && e.postData),
+            eKeys: e ? Object.keys(e) : []
+          }
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    const sheetName = data.sheetName || 'Planilha1';
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = spreadsheet.getSheetByName(sheetName);
+    
+    // Se a aba não existir, criar uma nova
+    if (!sheet) {
+      sheet = spreadsheet.insertSheet(sheetName);
+    }
+    
+    // Verificar se há cabeçalhos, se não, adicionar
+    if (sheet.getLastRow() === 0) {
+      const headers = [
+        'ID', 'Título', 'Categoria', 'Descrição', 'Prioridade', 
+        'Status', 'Data Limite', 'Tags', 'Data de Criação', 'Última Atualização'
+      ];
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      
+      // Formatação do cabeçalho
+      const headerRange = sheet.getRange(1, 1, 1, headers.length);
+      headerRange.setFontWeight('bold');
+      headerRange.setBackground('#4CAF50');
+      headerRange.setFontColor('white');
+      headerRange.setHorizontalAlignment('center');
+    }
+    
+    // Adicionar os dados das ideias
+    let rowsAdded = 0;
+    if (data.ideas && Array.isArray(data.ideas) && data.ideas.length > 0) {
+      const startRow = sheet.getLastRow() + 1;
+      const numRows = data.ideas.length;
+      const numCols = Math.max(...data.ideas.map(row => row.length));
+      
+      // Inserir todas as linhas de uma vez
+      sheet.getRange(startRow, 1, numRows, numCols).setValues(data.ideas);
+      rowsAdded = numRows;
+      
+      // Aplicar formatação alternada nas linhas
+      for (let i = 0; i < numRows; i++) {
+        const rowNum = startRow + i;
+        const rowRange = sheet.getRange(rowNum, 1, 1, numCols);
+        
+        if (i % 2 === 0) {
+          rowRange.setBackground('#f8f9fa');
+        }
+        
+        // Formatação especial para prioridades
+        const priorityCell = sheet.getRange(rowNum, 5); // Coluna da prioridade
+        const priorityValue = priorityCell.getValue();
+        
+        if (priorityValue && priorityValue.toString().includes('Alta')) {
+          priorityCell.setBackground('#ffebee');
+          priorityCell.setFontColor('#c62828');
+        } else if (priorityValue && priorityValue.toString().includes('Média')) {
+          priorityCell.setBackground('#fff8e1');
+          priorityCell.setFontColor('#f57c00');
+        } else if (priorityValue && priorityValue.toString().includes('Baixa')) {
+          priorityCell.setBackground('#e8f5e8');
+          priorityCell.setFontColor('#2e7d32');
+        }
+      }
+    }
+    
+    // Ajustar largura das colunas automaticamente
+    sheet.autoResizeColumns(1, 10);
+    
+    // Congelar a primeira linha (cabeçalhos)
+    sheet.setFrozenRows(1);
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: true,
+        message: `${rowsAdded} ideias adicionadas com sucesso na aba "${sheetName}"!`,
+        rowsAdded: rowsAdded,
+        sheetName: sheetName,
+        totalRows: sheet.getLastRow()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    Logger.log('Erro detalhado: ' + error.toString());
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: false,
+        message: 'Erro no servidor: ' + error.toString(),
+        stack: error.stack
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({
+      success: true,
+      message: 'Web App funcionando! ✅',
+      timestamp: new Date().toISOString(),
+      method: 'GET'
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Função de teste para verificar se tudo está funcionando
+function testFunction() {
+  const testData = {
+    sheetName: 'Teste',
+    ideas: [
+      [1, 'Ideia Teste', '🔧 Tecnologia', 'Descrição teste', '🟡 Média', '💭 Ideia', '', 'teste', '01/01/2024', '01/01/2024']
+    ]
+  };
+  
+  const mockEvent = {
+    parameter: {
+      data: JSON.stringify(testData)
+    }
+  };
+  
+  return doPost(mockEvent);
+}</code></pre>
+                </div>
+                
+                <!-- Instruções de Configuração -->
+                <div class="mt-4">
+                    <div class="flex items-center justify-between cursor-pointer" onclick="toggleSection('setupInstructions')">
+                        <h4 class="text-md font-semibold text-blue-300">📋 Como configurar (Passo a Passo)</h4>
+                        <svg id="setupArrow" class="w-4 h-4 text-blue-300 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <div id="setupInstructions" class="hidden mt-3 p-4 bg-blue-900/30 rounded-lg border border-blue-500/30">
+                        <ol class="text-sm text-blue-200 space-y-2 list-decimal list-inside">
+                            <li>Crie uma nova planilha no Google Sheets</li>
+                            <li>Vá em <strong>Extensões → Apps Script</strong></li>
+                            <li>Cole o código fornecido acima e salve</li>
+                            <li>Vá em <strong>Implantar → Nova implantação</strong></li>
+                            <li>Escolha "Aplicativo da Web", acesso "Qualquer pessoa"</li>
+                            <li>Copie a URL do Web App gerada aqui</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <!-- Aviso Importante -->
+                <div class="mt-4">
+                    <div class="flex items-center justify-between cursor-pointer" onclick="toggleSection('importantWarning')">
+                        <h4 class="text-md font-semibold text-yellow-300">⚠️ Importante</h4>
+                        <svg id="warningArrow" class="w-4 h-4 text-yellow-300 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <div id="importantWarning" class="hidden mt-3 p-4 bg-yellow-900/30 rounded-lg border border-yellow-500/30">
+                        <p class="text-sm text-yellow-200">
+                            <strong>⚠️ Importante:</strong> Após colar o código no Apps Script, vá em <strong>Implantar → Nova implantação</strong>, 
+                            escolha "Aplicativo da Web", defina acesso para "Qualquer pessoa" e copie a URL do Web App (não da planilha).
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Solução de Problemas -->
+                <div class="mt-4">
+                    <div class="flex items-center justify-between cursor-pointer" onclick="toggleSection('troubleshooting')">
+                        <h4 class="text-md font-semibold text-red-300">🔧 Solução de Problemas</h4>
+                        <svg id="troubleshootingArrow" class="w-4 h-4 text-red-300 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <div id="troubleshooting" class="hidden mt-3 p-4 bg-red-900/30 rounded-lg border border-red-500/30">
+                        <div class="text-sm text-red-200 space-y-3">
+                            <div><strong>1. Erro de permissão/autorização:</strong>
+                                <ul class="ml-4 mt-1 list-disc list-inside">
+                                    <li>Abra o Apps Script e execute a função <code>testFunction</code> manualmente</li>
+                                    <li>Autorize todas as permissões solicitadas</li>
+                                    <li>Aguarde alguns minutos e tente novamente</li>
+                                </ul>
+                            </div>
+                            <div><strong>2. URL não funciona:</strong>
+                                <ul class="ml-4 mt-1 list-disc list-inside">
+                                    <li>Use APENAS a URL do <strong>Web App</strong> (termina com /exec)</li>
+                                    <li>NÃO use a URL da planilha (sheets.google.com)</li>
+                                    <li>Exemplo correto: https://script.google.com/macros/s/SEU_ID/exec</li>
+                                </ul>
+                            </div>
+                            <div><strong>3. Erro 403/Acesso negado:</strong>
+                                <ul class="ml-4 mt-1 list-disc list-inside">
+                                    <li>Vá em <strong>Implantar → Gerenciar implantações</strong></li>
+                                    <li>Clique no ícone de edição (lápis)</li>
+                                    <li>Defina "Quem tem acesso" como <strong>"Qualquer pessoa"</strong></li>
+                                    <li>Clique em "Implantar" e use a nova URL</li>
+                                </ul>
+                            </div>
+                            <div><strong>4. Erro de rede/timeout:</strong>
+                                <ul class="ml-4 mt-1 list-disc list-inside">
+                                    <li>Verifique sua conexão com a internet</li>
+                                    <li>Tente acessar a URL diretamente no navegador</li>
+                                    <li>Se não funcionar, refaça a implantação</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Teste Rápido -->
+                <div class="mt-4">
+                    <div class="flex items-center justify-between cursor-pointer" onclick="toggleSection('quickTest')">
+                        <h4 class="text-md font-semibold text-green-300">✅ Teste Rápido</h4>
+                        <svg id="testArrow" class="w-4 h-4 text-green-300 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <div id="quickTest" class="hidden mt-3 p-4 bg-green-900/30 rounded-lg border border-green-500/30">
+                        <p class="text-sm text-green-200">
+                            Acesse sua URL do Web App diretamente no navegador. Deve mostrar: 
+                            <code class="bg-gray-800 px-2 py-1 rounded">{"success":true,"message":"Web App funcionando! ✅"}</code>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-green-500 mt-16">
+        <div class="container mx-auto px-4 py-8 max-w-6xl">
+            <div class="flex flex-col items-center justify-center text-center">
+                <div class="flex items-center space-x-6 mb-4">
+                    <a href="https://github.com/JXCoder-development" target="_blank" rel="noopener noreferrer" 
+                       class="text-green-400 hover:text-green-300 transition-colors transform hover:scale-110 duration-200"
+                       title="GitHub">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                    </a>
+                    <a href="https://www.behance.net/JXCoder-development" target="_blank" rel="noopener noreferrer" 
+                       class="text-green-400 hover:text-green-300 transition-colors transform hover:scale-110 duration-200"
+                       title="Behance">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6.938 4.503c.702 0 1.34.06 1.92.188.577.13 1.07.33 1.485.61.41.28.733.65.96 1.12.225.47.34 1.05.34 1.73 0 .74-.17 1.36-.507 1.86-.338.5-.837.9-1.502 1.22.906.26 1.576.72 2.022 1.37.448.66.665 1.45.665 2.36 0 .75-.13 1.39-.41 1.93-.28.55-.67 1-1.16 1.35-.48.348-1.05.6-1.67.76-.62.16-1.25.24-1.89.24H0V4.51h6.938v-.007zM3.495 8.22h2.912c.51 0 .912-.17 1.204-.5.29-.33.44-.75.44-1.27 0-.285-.04-.54-.13-.76-.09-.22-.23-.4-.42-.56-.19-.158-.42-.27-.69-.35-.27-.08-.58-.12-.93-.12H3.495v3.555zm0 4.725h3.102c.42 0 .795-.07 1.137-.2.34-.13.625-.32.855-.55.23-.23.395-.5.5-.81.11-.31.16-.65.16-1.02 0-.68-.17-1.22-.52-1.61-.35-.39-.83-.59-1.44-.59H3.495v4.765zM15.668 7.178H21.5V5.562h-5.832v1.615zm-1.017 5.072c0-.896.2-1.633.598-2.218.397-.585.94-.87 1.63-.87.44 0 .83.15 1.17.45.34.3.608.65.804 1.05.196.4.295.8.295 1.2v.68H16.9c.055.675.25 1.193.583 1.554.334.36.732.54 1.195.54.297 0 .57-.06.82-.18.25-.12.46-.3.63-.54l1.44.96c-.35.58-.81 1.01-1.38 1.29-.57.28-1.21.42-1.92.42-.68 0-1.29-.13-1.83-.39-.54-.26-.99-.62-1.35-1.08-.36-.46-.64-.99-.83-1.59-.19-.6-.285-1.24-.285-1.92v-.007zm4.24-1.17c-.044-.675-.23-1.19-.56-1.55-.33-.36-.73-.54-1.2-.54-.47 0-.87.18-1.2.54-.33.36-.52.875-.56 1.55h3.52z"/>
+                        </svg>
+                    </a>
+                    <a href="https://bento.me/JXCoder-development" target="_blank" rel="noopener noreferrer" 
+                       class="text-green-400 hover:text-green-300 transition-colors transform hover:scale-110 duration-200"
+                       title="Bento">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
+                        </svg>
+                    </a>
+                </div>
+                <div class="text-green-300">
+                    <p class="text-sm">Desenvolvido por <span class="text-green-400 font-semibold">JXCoder-development</span></p>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <script>
         class IdeaManager {
             constructor() {
                 this.ideas = JSON.parse(localStorage.getItem('ideas')) || [];
+                this.syncedIds = new Set(JSON.parse(localStorage.getItem('syncedIds')) || []);
                 this.init();
             }
 
@@ -177,6 +552,7 @@
                 this.bindEvents();
                 this.renderIdeas();
                 this.updateCounter();
+                this.updateSyncStatus();
             }
 
             bindEvents() {
@@ -185,6 +561,12 @@
                 document.getElementById('filterCategory').addEventListener('change', () => this.filterIdeas());
                 document.getElementById('filterStatus').addEventListener('change', () => this.filterIdeas());
                 document.getElementById('exportExcel').addEventListener('click', () => this.exportToExcel());
+                document.getElementById('exportGoogleSheets').addEventListener('click', () => this.exportToGoogleSheets());
+                document.getElementById('copyCode').addEventListener('click', () => this.copyAppsScriptCode());
+                document.getElementById('testConnection').addEventListener('click', () => this.testConnection());
+                
+                // Carregar configurações salvas
+                this.loadSheetsConfig();
             }
 
             handleSubmit(e) {
@@ -216,6 +598,8 @@
 
             saveToStorage() {
                 localStorage.setItem('ideas', JSON.stringify(this.ideas));
+                localStorage.setItem('syncedIds', JSON.stringify([...this.syncedIds]));
+                this.updateSyncStatus();
             }
 
             renderIdeas(ideasToRender = this.ideas) {
@@ -272,6 +656,11 @@
                     `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">${tag}</span>`
                 ).join(' ');
 
+                const isSynced = this.syncedIds.has(idea.id);
+                const syncIndicator = isSynced ? 
+                    '<span class="text-green-500 text-xs" title="Sincronizado com Google Sheets">☁️ Sincronizado</span>' :
+                    '<span class="text-orange-500 text-xs" title="Pendente de sincronização">⏳ Pendente</span>';
+
                 return `
                     <div class="idea-card bg-white rounded-xl shadow-lg p-6 ${priorityClass} fade-in">
                         <div class="flex justify-between items-start mb-4">
@@ -279,9 +668,12 @@
                                 <span class="text-2xl">${categoryIcons[idea.category] || '📋'}</span>
                                 <h3 class="text-lg font-semibold text-gray-800 line-clamp-2">${idea.title}</h3>
                             </div>
-                            <button class="delete-btn text-red-500 hover:text-red-700 transition-colors" data-id="${idea.id}">
-                                🗑️
-                            </button>
+                            <div class="flex items-center gap-2">
+                                ${syncIndicator}
+                                <button class="delete-btn text-red-500 hover:text-red-700 transition-colors" data-id="${idea.id}">
+                                    🗑️
+                                </button>
+                            </div>
                         </div>
                         
                         <p class="text-gray-600 mb-4 line-clamp-3">${idea.description}</p>
@@ -324,6 +716,7 @@
             deleteIdea(id) {
                 if (confirm('Tem certeza que deseja excluir esta ideia?')) {
                     this.ideas = this.ideas.filter(idea => idea.id !== id);
+                    this.syncedIds.delete(id); // Remove do controle de sincronização
                     this.saveToStorage();
                     this.renderIdeas();
                     this.updateCounter();
@@ -336,7 +729,10 @@
                 if (idea) {
                     idea.status = newStatus;
                     idea.updatedAt = new Date().toLocaleDateString('pt-BR');
+                    // Remove da lista de sincronizados pois foi modificado
+                    this.syncedIds.delete(id);
                     this.saveToStorage();
+                    this.renderIdeas(); // Re-renderizar para atualizar indicador
                     this.showNotification('Status atualizado! 📝');
                 }
             }
@@ -450,10 +846,310 @@
                 return statuses[status] || status;
             }
 
+            async exportToGoogleSheets() {
+                const webAppUrl = document.getElementById('sheetsUrl').value.trim();
+                const sheetName = document.getElementById('sheetName').value.trim() || 'Planilha1';
+                
+                if (!webAppUrl) {
+                    this.showNotification('Por favor, configure a URL do Web App! 📋', 'warning');
+                    return;
+                }
+                
+                if (this.ideas.length === 0) {
+                    this.showNotification('Nenhuma ideia para sincronizar! 📋', 'warning');
+                    return;
+                }
+                
+                // Filtrar apenas ideias não sincronizadas
+                const unsyncedIdeas = this.ideas.filter(idea => !this.syncedIds.has(idea.id));
+                
+                if (unsyncedIdeas.length === 0) {
+                    this.showNotification('✅ Todas as ideias já estão sincronizadas com o Google Sheets!', 'success');
+                    return;
+                }
+                
+                // Verificar se é uma URL válida do Apps Script
+                if (!webAppUrl.includes('script.google.com') && !webAppUrl.includes('script.googleusercontent.com')) {
+                    this.showNotification('URL inválida! Use a URL do Web App do Apps Script. ❌', 'error');
+                    return;
+                }
+                
+                try {
+                    this.showNotification(`Sincronizando ${unsyncedIdeas.length} nova(s) ideia(s)... 🔄`, 'info');
+                    
+                    // Primeiro, testar se o Web App está funcionando
+                    try {
+                        const testResponse = await fetch(webAppUrl, {
+                            method: 'GET',
+                            mode: 'cors'
+                        });
+                        
+                        if (!testResponse.ok) {
+                            throw new Error(`HTTP ${testResponse.status}: ${testResponse.statusText}`);
+                        }
+                        
+                        const testResult = await testResponse.json();
+                        if (!testResult.success) {
+                            throw new Error('Web App não está respondendo corretamente');
+                        }
+                        
+                        this.showNotification('Conexão OK! Enviando apenas ideias novas... 📤', 'info');
+                    } catch (testError) {
+                        this.showNotification('❌ Erro na conexão: Verifique se a URL está correta e se o Web App foi implantado com acesso "Qualquer pessoa"', 'error');
+                        console.error('Erro de teste:', testError);
+                        return;
+                    }
+                    
+                    // Preparar dados apenas das ideias não sincronizadas
+                    const dataToSend = {
+                        sheetName: sheetName,
+                        ideas: unsyncedIdeas.map(idea => [
+                            String(idea.id),
+                            String(idea.title || ''),
+                            String(this.getCategoryName(idea.category) || ''),
+                            String(idea.description || ''),
+                            String(this.getPriorityName(idea.priority) || ''),
+                            String(this.getStatusName(idea.status) || ''),
+                            idea.deadline ? String(new Date(idea.deadline).toLocaleDateString('pt-BR')) : '',
+                            String(idea.tags ? idea.tags.join(', ') : ''),
+                            String(idea.createdAt || ''),
+                            String(idea.updatedAt || '')
+                        ])
+                    };
+                    
+                    // Tentar múltiplos métodos de envio
+                    let response;
+                    let result;
+                    
+                    // Método 1: FormData (mais compatível)
+                    try {
+                        const formData = new FormData();
+                        formData.append('data', JSON.stringify(dataToSend));
+                        
+                        response = await fetch(webAppUrl, {
+                            method: 'POST',
+                            body: formData,
+                            mode: 'cors'
+                        });
+                        
+                        if (response.ok) {
+                            result = await response.json();
+                        } else {
+                            throw new Error('FormData method failed');
+                        }
+                    } catch (formDataError) {
+                        console.log('FormData falhou, tentando JSON direto...');
+                        
+                        // Método 2: JSON direto
+                        try {
+                            response = await fetch(webAppUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(dataToSend),
+                                mode: 'cors'
+                            });
+                            
+                            if (response.ok) {
+                                result = await response.json();
+                            } else {
+                                throw new Error('JSON method failed');
+                            }
+                        } catch (jsonError) {
+                            console.log('JSON falhou, tentando URL params...');
+                            
+                            // Método 3: URL Parameters (último recurso)
+                            const params = new URLSearchParams();
+                            params.append('data', JSON.stringify(dataToSend));
+                            
+                            response = await fetch(webAppUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                                body: params,
+                                mode: 'cors'
+                            });
+                            
+                            result = await response.json();
+                        }
+                    }
+                    
+                    // Verificar resultado
+                    if (result && result.success) {
+                        // Marcar as ideias como sincronizadas
+                        unsyncedIdeas.forEach(idea => {
+                            this.syncedIds.add(idea.id);
+                        });
+                        
+                        this.saveToStorage();
+                        this.renderIdeas(); // Re-renderizar para atualizar indicadores
+                        this.saveSheetsConfig(webAppUrl, sheetName);
+                        
+                        this.showNotification(`✅ ${unsyncedIdeas.length} nova(s) ideia(s) sincronizada(s) com "${result.sheetName || sheetName}"!`, 'success');
+                    } else {
+                        const errorMsg = result ? result.message : 'Resposta inválida do servidor';
+                        this.showNotification(`❌ Erro: ${errorMsg}`, 'error');
+                        console.error('Resultado completo:', result);
+                    }
+                    
+                } catch (error) {
+                    console.error('Erro completo:', error);
+                    let errorMessage = 'Erro desconhecido ao conectar com Google Sheets';
+                    
+                    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                        errorMessage = 'Erro de rede: Verifique sua conexão com a internet';
+                    } else if (error.message.includes('CORS')) {
+                        errorMessage = 'Erro CORS: Verifique se o Web App foi implantado corretamente';
+                    } else if (error.message.includes('JSON')) {
+                        errorMessage = 'Erro de formato: O servidor não retornou dados válidos';
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+                    
+                    this.showNotification(`🌐 ${errorMessage}`, 'error');
+                }
+            }
+            
+
+            
+            saveSheetsConfig(url, sheetName) {
+                localStorage.setItem('sheetsUrl', url);
+                localStorage.setItem('sheetName', sheetName);
+            }
+            
+            loadSheetsConfig() {
+                const savedUrl = localStorage.getItem('sheetsUrl');
+                const savedSheetName = localStorage.getItem('sheetName');
+                
+                if (savedUrl) {
+                    document.getElementById('sheetsUrl').value = savedUrl;
+                }
+                if (savedSheetName) {
+                    document.getElementById('sheetName').value = savedSheetName;
+                }
+            }
+            
+            copyAppsScriptCode() {
+                const code = document.getElementById('appsScriptCode').textContent;
+                navigator.clipboard.writeText(code).then(() => {
+                    this.showNotification('Código copiado para a área de transferência! 📋', 'success');
+                }).catch(() => {
+                    this.showNotification('Erro ao copiar. Selecione e copie manualmente. ❌', 'error');
+                });
+            }
+
+            async testConnection() {
+                const webAppUrl = document.getElementById('sheetsUrl').value.trim();
+                const statusDiv = document.getElementById('connectionStatus');
+                
+                if (!webAppUrl) {
+                    this.showNotification('Por favor, insira a URL do Web App primeiro! 📋', 'warning');
+                    return;
+                }
+                
+                // Verificar se é uma URL válida do Apps Script
+                if (!webAppUrl.includes('script.google.com') && !webAppUrl.includes('script.googleusercontent.com')) {
+                    statusDiv.innerHTML = '<span class="text-red-400">❌ URL inválida</span>';
+                    this.showNotification('URL inválida! Use a URL do Web App do Apps Script. ❌', 'error');
+                    return;
+                }
+                
+                statusDiv.innerHTML = '<span class="text-blue-400">🔄 Testando...</span>';
+                
+                try {
+                    // Teste 1: Verificar se a URL responde
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+                    
+                    const response = await fetch(webAppUrl, {
+                        method: 'GET',
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.message && result.message.includes('funcionando')) {
+                        statusDiv.innerHTML = '<span class="text-green-400">✅ Conexão OK!</span>';
+                        this.showNotification('✅ Conexão testada com sucesso! O Web App está funcionando.', 'success');
+                        
+                        // Salvar URL se o teste passou
+                        this.saveSheetsConfig(webAppUrl, document.getElementById('sheetName').value.trim());
+                    } else {
+                        statusDiv.innerHTML = '<span class="text-yellow-400">⚠️ Resposta inesperada</span>';
+                        this.showNotification('⚠️ O Web App respondeu, mas com formato inesperado. Verifique o código do Apps Script.', 'warning');
+                    }
+                    
+                } catch (error) {
+                    console.error('Erro no teste:', error);
+                    
+                    let errorMessage = '';
+                    let statusMessage = '';
+                    
+                    if (error.name === 'AbortError') {
+                        errorMessage = 'Timeout: O Web App não respondeu em 10 segundos';
+                        statusMessage = '<span class="text-red-400">❌ Timeout</span>';
+                    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                        errorMessage = 'Erro de rede: Verifique se o Web App foi implantado corretamente';
+                        statusMessage = '<span class="text-red-400">❌ Erro de rede</span>';
+                    } else if (error.message.includes('CORS')) {
+                        errorMessage = 'Erro CORS: Verifique as configurações de acesso do Web App';
+                        statusMessage = '<span class="text-red-400">❌ Erro CORS</span>';
+                    } else if (error.message.includes('404')) {
+                        errorMessage = 'URL não encontrada: Verifique se a URL do Web App está correta';
+                        statusMessage = '<span class="text-red-400">❌ URL não encontrada</span>';
+                    } else if (error.message.includes('403')) {
+                        errorMessage = 'Acesso negado: Verifique se o Web App tem acesso "Qualquer pessoa"';
+                        statusMessage = '<span class="text-red-400">❌ Acesso negado</span>';
+                    } else {
+                        errorMessage = `Erro: ${error.message}`;
+                        statusMessage = '<span class="text-red-400">❌ Erro</span>';
+                    }
+                    
+                    statusDiv.innerHTML = statusMessage;
+                    this.showNotification(errorMessage, 'error');
+                }
+            }
+
+            updateSyncStatus() {
+                const unsyncedCount = this.ideas.filter(idea => !this.syncedIds.has(idea.id)).length;
+                const syncedCount = this.syncedIds.size;
+                
+                // Atualizar badge
+                const badge = document.getElementById('syncBadge');
+                if (unsyncedCount > 0) {
+                    badge.textContent = unsyncedCount;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+                
+                // Atualizar status text
+                const statusElement = document.getElementById('syncStatus');
+                if (this.ideas.length === 0) {
+                    statusElement.textContent = '';
+                } else if (unsyncedCount === 0) {
+                    statusElement.textContent = '✅ Tudo sincronizado';
+                    statusElement.className = 'block text-xs text-green-300 mt-1';
+                } else {
+                    statusElement.textContent = `⏳ ${unsyncedCount} pendente(s)`;
+                    statusElement.className = 'block text-xs text-orange-300 mt-1';
+                }
+            }
+
             showNotification(message, type = 'success') {
                 // Criar notificação temporária
                 const bgColor = type === 'success' ? 'bg-green-500' : 
-                               type === 'warning' ? 'bg-yellow-500' : 'bg-red-500';
+                               type === 'warning' ? 'bg-yellow-500' : 
+                               type === 'error' ? 'bg-red-500' :
+                               type === 'info' ? 'bg-blue-500' : 'bg-gray-500';
                 
                 const notification = document.createElement('div');
                 notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in`;
@@ -462,7 +1158,22 @@
                 
                 setTimeout(() => {
                     notification.remove();
-                }, 3000);
+                }, 4000);
+            }
+        }
+
+        // Função para alternar seções colapsáveis
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const arrowId = sectionId.replace('Section', 'Arrow').replace('Instructions', 'Arrow').replace('Warning', 'Arrow').replace('troubleshooting', 'troubleshootingArrow').replace('Test', 'Arrow');
+            const arrow = document.getElementById(arrowId);
+            
+            if (section.classList.contains('hidden')) {
+                section.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                section.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
             }
         }
 
@@ -471,5 +1182,5 @@
             new IdeaManager();
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'968e29bec6a0f21b',t:'MTc1NDE0Mzg3MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'969203e0f7f2240e',t:'MTc1NDE4NDI2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
